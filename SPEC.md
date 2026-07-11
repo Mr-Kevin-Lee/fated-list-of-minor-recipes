@@ -1,4 +1,4 @@
-# Recipe & Grocery Planner — Spec
+# Fated List of Minor Recipes — Spec
 
 ## Problem
 
@@ -45,7 +45,7 @@ Quantity contention (two recipes both wanting the same 2 tomatoes when only 2 we
 
 - Primary workflow: open app → enter this week's haul → see Makeable / Almost / Missing lists → optionally filter by season.
 - Should be fast to enter groceries (hence autocomplete requirement).
-- Ingredient name matching should be case-insensitive and tolerant of minor formatting differences (e.g. "Tomato" vs "tomatoes") — see Open Questions on normalization strategy.
+- Ingredient name matching should be case-insensitive and tolerant of minor formatting differences (e.g. "Tomato" vs "tomatoes") — see Decisions #3 on normalization strategy.
 
 ## Future Features (not in this version, but design should not preclude them)
 
