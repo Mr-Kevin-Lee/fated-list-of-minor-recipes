@@ -6,6 +6,7 @@ import { matchRecipes } from '../lib/matching';
 import IngredientTagInput from './IngredientTagInput';
 import MatchResults from './MatchResults';
 import SettingsPanel from './SettingsPanel';
+import StaplesPanel from './StaplesPanel';
 
 interface PantryTabProps {
   recipes: Recipe[];
@@ -16,6 +17,8 @@ interface PantryTabProps {
   settings: MatchSettings;
   onSettingsChange: (settings: MatchSettings) => void;
   ingredientSuggestions: string[];
+  staples: string[];
+  onStaplesChange: (staples: string[]) => void;
 }
 
 export default function PantryTab({
@@ -27,6 +30,8 @@ export default function PantryTab({
   settings,
   onSettingsChange,
   ingredientSuggestions,
+  staples,
+  onStaplesChange,
 }: PantryTabProps) {
   const filteredRecipes = useMemo(
     () => recipesInSeason(recipes, seasonFilter),
@@ -34,8 +39,8 @@ export default function PantryTab({
   );
 
   const matches = useMemo(
-    () => matchRecipes(filteredRecipes, pantry.items, settings),
-    [filteredRecipes, pantry.items, settings],
+    () => matchRecipes(filteredRecipes, pantry.items, settings, staples),
+    [filteredRecipes, pantry.items, settings, staples],
   );
 
   return (
@@ -66,6 +71,8 @@ export default function PantryTab({
       </label>
 
       <SettingsPanel settings={settings} onChange={onSettingsChange} />
+
+      <StaplesPanel staples={staples} onChange={onStaplesChange} />
 
       {recipes.length === 0 ? (
         <p className="empty-state">Add some recipes first, then come back here.</p>

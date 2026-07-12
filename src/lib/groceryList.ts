@@ -12,14 +12,18 @@ async function saveGroceryList(list: GroceryListItem[]): Promise<GroceryListItem
   return list;
 }
 
-/** Adds a recipe's missing ingredients (not already in the Pantry) to the Grocery List, merging with existing entries. */
+/** Adds a recipe's missing, non-staple ingredients (not already in the Pantry) to the Grocery List, merging with existing entries. */
 export async function addIngredientsForRecipe(
   recipe: Recipe,
   pantryItems: string[],
+  staples: string[] = [],
 ): Promise<GroceryListItem[]> {
   const list = await getGroceryList();
   const pantrySet = new Set(pantryItems.map(normalizeIngredient));
-  const missing = recipe.ingredients.filter((ing) => !pantrySet.has(normalizeIngredient(ing)));
+  const stapleSet = new Set(staples.map(normalizeIngredient));
+  const missing = recipe.ingredients.filter(
+    (ing) => !pantrySet.has(normalizeIngredient(ing)) && !stapleSet.has(normalizeIngredient(ing)),
+  );
 
   const next = [...list];
   for (const ingredient of missing) {

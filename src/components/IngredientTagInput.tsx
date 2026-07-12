@@ -1,4 +1,5 @@
 import { useId, useState } from 'react';
+import { normalizeIngredient } from '../lib/matching';
 
 interface IngredientTagInputProps {
   items: string[];
@@ -17,9 +18,9 @@ export default function IngredientTagInput({
   const listId = useId();
 
   function addDraft() {
-    const value = draft.trim();
+    const value = normalizeIngredient(draft);
     if (!value) return;
-    if (!items.some((item) => item.toLowerCase() === value.toLowerCase())) {
+    if (!items.some((item) => normalizeIngredient(item) === value)) {
       onChange([...items, value]);
     }
     setDraft('');

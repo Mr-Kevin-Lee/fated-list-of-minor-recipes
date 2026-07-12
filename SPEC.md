@@ -17,7 +17,7 @@ v1 covers Recipes + Pantry + matching. v2 (see below) adds Grocery List + Weekly
 
 ## Core Concepts
 
-- **Recipe**: a name, a season tag (or "any season"), and a list of ingredients. No steps/instructions for now.
+- **Recipe**: a name, a season tag (or "any season"), a list of ingredients, and optional cuisine, difficulty, and link/reference fields (Resolved — see Decisions #6). No steps/instructions for now.
 - **Ingredient**: identified by name only — presence/absence, not quantity. A recipe lists "flour," not "2 cups flour." (Resolved — see Decisions #1.)
 - **Pantry**: the list of groceries you currently have on hand. In v1, this just accumulates with no reset (v1 has no weekly-clear mechanism at all, since that's tied to the skip-carryover concept — see v2's "Start New Week").
 
@@ -25,8 +25,10 @@ v1 covers Recipes + Pantry + matching. v2 (see below) adds Grocery List + Weekly
 
 ### 1. Recipe management
 - Add, edit, and delete recipes.
-- Each recipe has: name, season (Spring / Summer / Fall / Winter / Any), and a list of ingredients (names only — no quantities/units).
+- Each recipe has: name, season (Spring / Summer / Fall / Winter / Any), a list of ingredients (names only — no quantities/units), and optional cuisine, difficulty, and link/reference fields (Decision #6).
 - No recipe steps/instructions in this version.
+- **Bulk import from CSV**: recipes can be imported from a CSV file (e.g. exported from Google Sheets) — the user uploads a file, maps its columns to name/ingredients/season/cuisine/difficulty/link (name and ingredients required, the rest optional), and the app creates recipes from the rows locally in the browser. No network calls or Google account access involved, consistent with the local-only architecture (Decision #6).
+- **Sort**: the recipe list can be sorted by Name, Recently used, or Least recently used (Decision #7). Recently/least-recently-used ordering is driven by a `lastMadeAt` timestamp, set whenever a recipe is marked "cooked" on the Weekly Menu (see v2 requirement 8). Recipes never marked cooked sort as "never made" — first under Least recently used, last under Recently used.
 
 ### 2. Pantry entry
 - User enters what's currently on hand (a simple list of ingredient names), typically right after a grocery trip.
@@ -47,6 +49,8 @@ Ingredient name matching (Pantry vs. recipe ingredient) uses simple normalizatio
 
 Quantity contention (two recipes both wanting the same 2 tomatoes when only 2 were bought) is not modeled — matching is purely presence-based. (Resolved — see Decisions #5.)
 
+**Pantry staples** are excluded from matching entirely: a user-editable list (managed from the Pantry tab, defaulting to salt/pepper/oil/water) of ingredients assumed always on hand. Any recipe ingredient matching a staple (same normalization as above) is dropped before computing missing ingredients *and* before computing the "almost makeable" percentage denominator — so a staple never appears as missing, and doesn't inflate a recipe's ingredient count for threshold purposes. Staples are also excluded when adding a recipe's ingredients to the Grocery List (v2 requirement 6), since something always on hand shouldn't show up as something to buy. (Resolved — see Decisions #4, updated from its original "skipped for v1" state.)
+
 ### 4. Season filter
 - Recipes can be filtered by season (Spring / Summer / Fall / Winter / Any).
 - Season filter applies on top of the matching view — e.g. "show me what's makeable this week, in season."
@@ -60,7 +64,6 @@ Quantity contention (two recipes both wanting the same 2 tomatoes when only 2 we
 
 ## Future Features (not in this version, but design should not preclude them)
 
-- **Sort by recently used / least recently used recipe** — implies recipes need a "last made" timestamp, updated when a user marks a recipe as made/cooked. This requires adding some notion of "I cooked this" as an action, even though recipe steps aren't tracked.
 - **Random recipe picker** — pick a random recipe, optionally scoped to current filters (e.g. random from "Makeable this week" or random from "in season").
 - **Ingredient autocomplete based on existing recipe ingredients** (pulled forward into v1 above, since it's needed for a smooth core workflow — flagged here because it was originally listed as a future feature).
 
@@ -71,8 +74,11 @@ Also see **v2: Weekly Menu & Grocery List** below — a scoped-out design for th
 1. **Ingredient granularity — presence-only.** No quantities/units tracked in v1. Matching answers "do I have this ingredient at all," not "do I have enough of it." Simplest to build, and quantity sufficiency is a much smaller problem than most users hit in practice (you either have basil or you don't).
 2. **"Almost makeable" threshold — user-toggleable between "total missing" and "percentage."** Rather than picking one, both modes are supported and the user switches between them (with an underlying number: N for total missing, P% for percentage), defaulting to total missing. Fixed count is simpler to reason about at a glance ("missing 2 things"); percentage scales better across recipes of very different sizes. Since reasonable people disagree on which is more intuitive, it's a toggle instead of a forced choice.
 3. **Ingredient name normalization — lowercase/trim/basic pluralization, no synonym list.** Matching lowercases, trims whitespace, and strips a trailing "s"/"es" so "tomato" matches "tomatoes." A full synonym/alias list (e.g. "scallion" = "green onion") is deferred — it requires ongoing manual curation for a benefit that's hard to justify before real usage shows which mismatches actually matter. Users can just enter ingredients consistently with how they wrote the recipe as a workaround.
-4. **Pantry staples — skipped for v1.** No staples/exclusion list for now. Every ingredient a recipe lists (including salt, oil, water, etc.) counts normally in matching — if a recipe needs it and it's not in the Pantry, it shows as missing. This trades some matching accuracy for a smaller v1 scope; revisit if phantom "missing: salt"-type results prove annoying in practice.
+4. **Pantry staples — implemented as a user-editable exclusion list, defaulting to a small preset.** Originally deferred for v1 ("every ingredient counts normally, including salt/oil/water"), later built once phantom "missing: salt"-type results were worth addressing. Defaults to salt/pepper/oil/water (editable) rather than starting empty, since these are near-universal and starting with a sensible preset avoids the tedium of the user having to think of and add every obvious staple themselves before the feature is useful.
 5. **Quantity contention — not modeled, presence-based only.** If two recipes each want the same 2 tomatoes, both can independently show as "makeable." This is a deliberate simplification: the app is answering "which recipes could I make," not "which recipes could I make simultaneously from this exact Pantry," and resolving contention would require quantities (see Decision #1), which are explicitly out of scope for v1.
+6. **Recipe fields for CSV import — keep cuisine, difficulty, and link; drop everything else.** Importing from an existing Google Sheets recipe collection surfaced extra columns (type of dish, cuisine, difficulty, left-overs, link/reference). Type of dish and left-overs are dropped (not useful to this app's purpose). Cuisine and difficulty are kept as optional stored fields even though nothing currently filters/sorts by them, since dropping data during import is one-way — cheap to keep now, costly to have discarded if wanted later. Link/reference is kept and rendered as a clickable link in the recipe list, since pointing back to the original recipe (steps, photos, etc.) directly addresses the "no recipe steps" limitation without violating Decision-to-not-track-steps. Import itself is CSV-based (not a live Google Sheets API connection) with user-driven column mapping, since a live API connection would require OAuth/network calls that conflict with the local-only architecture (see Technical Approach).
+7. **Sort control lives in the Recipes tab only**, not also in Pantry match results. Keeps the feature to one place rather than duplicating sort logic/UI across two components; the Recipes tab is the natural home since it's the full-catalog browsing view.
+8. **Capitalization is normalized automatically, differently for recipe names vs. ingredients.** Recipe names are Title Cased on save (e.g. "shepherd's pie with gravy" → "Shepherd's Pie With Gravy"); ingredient names are lowercased at the point of entry, in the one shared tag-input component used for Pantry, recipe ingredients, and staples alike. This is purely a display/storage consistency fix — matching already normalized casing internally for comparison (Decision #3), so this doesn't change any matching behavior. Ingredients are lowercased rather than Title Cased because ingredient lists read more naturally that way (a recipe card listing "Tomatoes, Basil, Mozzarella" reads oddly compared to "tomatoes, basil, mozzarella"), and it keeps them visually distinct from recipe titles.
 
 ## Technical Approach
 
@@ -98,7 +104,7 @@ Scoped as the next milestone after v1 (not part of v1 itself). Adds the recipe �
 
 - **Weekly Menu**: a set of recipes you're planning to cook, picked from your full recipe catalog — independent of current makeable/almost/missing status. You can menu a recipe you're missing everything for; that's the point (you're about to go buy for it).
 - **Grocery List**: ingredients needed for menu recipes that aren't already in the Pantry, each item showing which recipe(s) requested it. Checking an item off as bought removes it from the Grocery List and adds it to the Pantry in one action.
-- **Cooked / Skipped status**: a status per menu recipe (unset / cooked / skipped). Marking cooked updates a "last made" timestamp (feeds the future "recently used" sort) and has no effect on the Pantry. Marking **skipped** prompts a carryover choice (see below) — this is the one place cooked/skipped status *does* touch the Pantry.
+- **Cooked / Skipped status**: a status per menu recipe (unset / cooked / skipped). Marking cooked updates a "last made" timestamp (feeds the "recently used" sort, requirement 1) and has no effect on the Pantry. Marking **skipped** prompts a carryover choice (see below) — this is the one place cooked/skipped status *does* touch the Pantry.
 - **Carryover selection**: when you mark a recipe skipped, you're immediately shown its ingredient list as a checklist (default: all checked) and choose which ones you still actually have. Checked ingredients are flagged to survive the next "Start New Week" clear; unchecked ones are not protected.
 - **Start New Week**: an explicit, user-triggered action (not calendar/date-based — there's still no meal planning/calendar system, per Out of Scope) that clears the Pantry down to just the carryover-flagged ingredients from any recipes skipped that cycle, and resets the Weekly Menu to empty.
 
@@ -119,7 +125,7 @@ Scoped as the next milestone after v1 (not part of v1 itself). Adds the recipe �
 
 8. **Cooked / Skipped tracking**
    - Each menu recipe can be marked cooked, skipped, or left unset, independent of the menu itself (Decision: v2 #3).
-   - Marking **cooked**: purely informational (feeds the "recently used" future feature); does not modify the Pantry.
+   - Marking **cooked**: sets the recipe's `lastMadeAt` timestamp (feeds the "recently used" sort, requirement 1); does not modify the Pantry.
    - Marking **skipped**: immediately prompts a per-ingredient checklist for that recipe (default: all checked, Decision v2 #6). Checked ingredients are flagged as carryover, meaning they survive the next "Start New Week" clear (requirement 9).
 
 9. **Start New Week**
@@ -143,4 +149,3 @@ Scoped as the next milestone after v1 (not part of v1 itself). Adds the recipe �
 - Multi-week pantry/inventory tracking (carrying over unused groceries) — **superseded for v2**: see "v2: Weekly Menu & Grocery List" above, which adds an explicit "Start New Week" clear with selective carryover from skipped recipes.
 - Shopping list generation (working backward from a chosen recipe to a list of what to buy) — **superseded for v2**: see "v2: Weekly Menu & Grocery List" above.
 - Nutrition info, meal planning/calendar, multi-user support.
-- Pantry staples (salt/oil/water-type exclusion list) — deferred, see Decisions #4.

@@ -11,4 +11,5 @@ export const KEYS = {
   matchSettings: 'matchSettings',
   weeklyMenu: 'weeklyMenu',
   groceryList: 'groceryList',
+  staples: 'staples',
 } as const;

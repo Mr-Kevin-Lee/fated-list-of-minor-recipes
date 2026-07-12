@@ -1,5 +1,5 @@
 import { store, KEYS } from './db';
-import type { Recipe, Season } from '../types';
+import type { Recipe, RecipeSort, Season } from '../types';
 
 export async function getRecipes(): Promise<Recipe[]> {
   const recipes = await store.getItem<Recipe[]>(KEYS.recipes);
@@ -25,6 +25,41 @@ export async function saveRecipe(recipe: Omit<Recipe, 'id'> & { id?: string }): 
 export async function deleteRecipe(id: string): Promise<void> {
   const recipes = await getRecipes();
   await store.setItem(KEYS.recipes, recipes.filter((r) => r.id !== id));
+}
+
+/** Sets a recipe's lastMadeAt to now — called when marking a Weekly Menu recipe "cooked". */
+export async function touchLastMade(id: string): Promise<Recipe | undefined> {
+  const recipes = await getRecipes();
+  const index = recipes.findIndex((r) => r.id === id);
+  if (index === -1) return undefined;
+  const updated: Recipe = { ...recipes[index], lastMadeAt: new Date().toISOString() };
+  recipes[index] = updated;
+  await store.setItem(KEYS.recipes, recipes);
+  return updated;
+}
+
+export function sortRecipes(recipes: Recipe[], sort: RecipeSort): Recipe[] {
+  const sorted = [...recipes];
+  if (sort === 'name') {
+    sorted.sort((a, b) => a.name.localeCompare(b.name));
+  } else if (sort === 'recent') {
+    // Most recently cooked first; never-cooked recipes last.
+    sorted.sort((a, b) => {
+      if (!a.lastMadeAt && !b.lastMadeAt) return 0;
+      if (!a.lastMadeAt) return 1;
+      if (!b.lastMadeAt) return -1;
+      return b.lastMadeAt.localeCompare(a.lastMadeAt);
+    });
+  } else if (sort === 'least-recent') {
+    // Never-cooked recipes first (most "overdue"), then oldest-cooked first.
+    sorted.sort((a, b) => {
+      if (!a.lastMadeAt && !b.lastMadeAt) return 0;
+      if (!a.lastMadeAt) return -1;
+      if (!b.lastMadeAt) return 1;
+      return a.lastMadeAt.localeCompare(b.lastMadeAt);
+    });
+  }
+  return sorted;
 }
 
 export function ingredientNamesFromRecipes(recipes: Recipe[]): string[] {

@@ -311,3 +311,44 @@ button.danger {
   color: #a89;
   font-size: 0.8rem;
 }
+
+.import-csv {
+  margin: 1rem 0;
+  border: 1px solid #4a3a52;
+  border-radius: 8px;
+  padding: 0.5rem 0.75rem;
+}
+
+.import-csv-body {
+  margin-top: 0.75rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+
+.import-mapping {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+
+.optional-tag {
+  color: #a89;
+  font-weight: normal;
+  font-size: 0.8rem;
+}
+
+.recipe-link {
+  margin-top: 0.25rem;
+  font-size: 0.85rem;
+}
+
+.recipe-link a {
+  color: #e8c07d;
+}
+
+.recipe-last-made {
+  font-size: 0.8rem;
+  color: #a89;
+  margin-top: 0.15rem;
+}

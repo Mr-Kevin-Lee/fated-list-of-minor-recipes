@@ -1,6 +1,12 @@
 import { useEffect, useMemo, useState } from 'react';
 import type { GroceryListItem, MatchSettings, MenuEntry, Pantry, Recipe, Season } from './types';
-import { deleteRecipe, getRecipes, ingredientNamesFromRecipes, saveRecipe } from './lib/recipes';
+import {
+  deleteRecipe,
+  getRecipes,
+  ingredientNamesFromRecipes,
+  saveRecipe,
+  touchLastMade,
+} from './lib/recipes';
 import { addToPantry, getPantry, savePantry, startNewWeek } from './lib/pantry';
 import { getMatchSettings, saveMatchSettings } from './lib/settings';
 import {
@@ -16,6 +22,7 @@ import {
   getGroceryList,
   removeRecipeFromGroceryList,
 } from './lib/groceryList';
+import { getStaples, saveStaples } from './lib/staples';
 import PantryTab from './components/PantryTab';
 import RecipesTab from './components/RecipesTab';
 import WeeklyMenuTab from './components/WeeklyMenuTab';
@@ -36,22 +43,25 @@ export default function App() {
     percentageThreshold: 25,
   });
   const [seasonFilter, setSeasonFilter] = useState<Season | 'all'>('all');
+  const [staples, setStaples] = useState<string[]>([]);
 
   useEffect(() => {
     (async () => {
-      const [loadedRecipes, loadedPantry, loadedSettings, loadedMenu, loadedGroceryList] =
+      const [loadedRecipes, loadedPantry, loadedSettings, loadedMenu, loadedGroceryList, loadedStaples] =
         await Promise.all([
           getRecipes(),
           getPantry(),
           getMatchSettings(),
           getMenu(),
           getGroceryList(),
+          getStaples(),
         ]);
       setRecipes(loadedRecipes);
       setPantry(loadedPantry);
       setSettings(loadedSettings);
       setMenu(loadedMenu);
       setGroceryList(loadedGroceryList);
+      setStaples(loadedStaples);
       setLoaded(true);
     })();
   }, []);
@@ -72,6 +82,13 @@ export default function App() {
   async function handleDeleteRecipe(id: string) {
     await deleteRecipe(id);
     setRecipes((prev) => prev.filter((r) => r.id !== id));
+  }
+
+  async function handleImportRecipes(imported: Omit<Recipe, 'id'>[]) {
+    for (const recipe of imported) {
+      await saveRecipe(recipe);
+    }
+    setRecipes(await getRecipes());
   }
 
   async function handlePantryChange(items: string[]) {
@@ -95,6 +112,10 @@ export default function App() {
 
   async function handleMarkCooked(recipeId: string) {
     setMenu(await setRecipeStatus(recipeId, 'cooked', []));
+    const updated = await touchLastMade(recipeId);
+    if (updated) {
+      setRecipes((prev) => prev.map((r) => (r.id === recipeId ? updated : r)));
+    }
   }
 
   async function handleConfirmSkip(recipeId: string, carryoverIngredients: string[]) {
@@ -102,7 +123,11 @@ export default function App() {
   }
 
   async function handleAddIngredientsToGroceryList(recipe: Recipe) {
-    setGroceryList(await addIngredientsForRecipe(recipe, pantry.items));
+    setGroceryList(await addIngredientsForRecipe(recipe, pantry.items, staples));
+  }
+
+  async function handleStaplesChange(next: string[]) {
+    setStaples(await saveStaples(next));
   }
 
   async function handleCheckOffGroceryItem(itemId: string) {
@@ -155,6 +180,8 @@ export default function App() {
             settings={settings}
             onSettingsChange={handleSettingsChange}
             ingredientSuggestions={ingredientSuggestions}
+            staples={staples}
+            onStaplesChange={handleStaplesChange}
           />
         )}
         {tab === 'recipes' && (
@@ -163,6 +190,7 @@ export default function App() {
             ingredientSuggestions={ingredientSuggestions}
             onSave={handleSaveRecipe}
             onDelete={handleDeleteRecipe}
+            onImport={handleImportRecipes}
           />
         )}
         {tab === 'menu' && (

@@ -7,7 +7,14 @@ export interface Recipe {
   name: string;
   season: Season;
   ingredients: string[];
+  cuisine?: string;
+  difficulty?: string;
+  link?: string;
+  /** ISO timestamp set when the recipe is marked "cooked" on the Weekly Menu. */
+  lastMadeAt?: string;
 }
+
+export type RecipeSort = 'name' | 'recent' | 'least-recent';
 
 export interface Pantry {
   updatedAt: string;
