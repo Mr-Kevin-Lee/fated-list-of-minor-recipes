@@ -13,7 +13,9 @@ body {
   max-width: 480px;
   margin: 0 auto;
   min-height: 100vh;
-  padding: 0 1rem 2rem;
+  min-height: 100dvh;
+  padding: env(safe-area-inset-top) calc(1rem + env(safe-area-inset-right))
+    calc(2rem + env(safe-area-inset-bottom)) calc(1rem + env(safe-area-inset-left));
 }
 
 .app-header h1 {

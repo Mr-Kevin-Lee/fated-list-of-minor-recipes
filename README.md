@@ -20,6 +20,19 @@ npm run build
 npm run preview
 ```
 
+## Deploy (GitHub Pages)
+
+This repo includes a GitHub Actions workflow (`.github/workflows/deploy.yml`) that builds and deploys automatically on every push to `main`.
+
+One-time setup:
+
+1. Push this repo to GitHub (`git push -u origin main`) — the repo backing this is `fated-list-of-minor-recipes`.
+2. **The repo name must be `fated-list-of-minor-recipes`** — `vite.config.ts`'s `base` path (`/fated-list-of-minor-recipes/`) is hardcoded to match, since GitHub Pages serves project sites at `https://<username>.github.io/<repo-name>/`. If you ever rename the repo, update `base` in `vite.config.ts` to match.
+3. On GitHub: **Settings → Pages → Source → GitHub Actions**.
+4. Push to `main` (or re-run the workflow from the Actions tab). The site will be live at `https://<username>.github.io/fated-list-of-minor-recipes/` a minute or two later.
+
+After that, every push to `main` redeploys automatically — no further manual steps.
+
 ## Stack
 
 - React + TypeScript + Vite

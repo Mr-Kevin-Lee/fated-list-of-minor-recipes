@@ -2,7 +2,11 @@ import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 import { VitePWA } from 'vite-plugin-pwa';
 
-export default defineConfig({
+export default defineConfig(({ command }) => ({
+  // GitHub Pages serves project sites at https://<user>.github.io/<repo-name>/ — this must
+  // match the actual GitHub repo name, or assets will 404. Only applied for production builds,
+  // since the dev server should keep serving at the plain localhost root.
+  base: command === 'build' ? '/fated-list-of-minor-recipes/' : '/',
   plugins: [
     react(),
     VitePWA({
@@ -20,4 +24,4 @@ export default defineConfig({
       },
     }),
   ],
-});
+}));
