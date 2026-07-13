@@ -67,6 +67,7 @@ export default function App() {
   }, []);
 
   const ingredientSuggestions = useMemo(() => ingredientNamesFromRecipes(recipes), [recipes]);
+  const menuRecipeIds = useMemo(() => new Set(menu.map((entry) => entry.recipeId)), [menu]);
 
   async function handleSaveRecipe(recipe: Omit<Recipe, 'id'> & { id?: string }) {
     const saved = await saveRecipe(recipe);
@@ -188,9 +189,11 @@ export default function App() {
           <RecipesTab
             recipes={recipes}
             ingredientSuggestions={ingredientSuggestions}
+            menuRecipeIds={menuRecipeIds}
             onSave={handleSaveRecipe}
             onDelete={handleDeleteRecipe}
             onImport={handleImportRecipes}
+            onAddToMenu={handleAddRecipeToMenu}
           />
         )}
         {tab === 'menu' && (

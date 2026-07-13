@@ -72,7 +72,11 @@ export default function PantryTab({
 
       <SettingsPanel settings={settings} onChange={onSettingsChange} />
 
-      <StaplesPanel staples={staples} onChange={onStaplesChange} />
+      <StaplesPanel
+        staples={staples}
+        onChange={onStaplesChange}
+        ingredientSuggestions={ingredientSuggestions}
+      />
 
       {recipes.length === 0 ? (
         <p className="empty-state">Add some recipes first, then come back here.</p>

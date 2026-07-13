@@ -59,7 +59,7 @@ export default function WeeklyMenuTab({
   return (
     <div className="weekly-menu-tab">
       <button type="button" onClick={() => setShowPicker((v) => !v)}>
-        + Add recipe
+        + Add to Menu
       </button>
 
       {showPicker && (
@@ -94,6 +94,8 @@ export default function WeeklyMenuTab({
                 <strong>{recipe.name}</strong>
                 <span className={`menu-status menu-status--${entry.status}`}>{entry.status}</span>
               </div>
+
+              <div className="recipe-ingredients">{recipe.ingredients.join(', ')}</div>
 
               <div className="menu-item-actions">
                 <button type="button" onClick={() => onAddIngredientsToGroceryList(recipe)}>

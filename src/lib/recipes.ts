@@ -77,3 +77,23 @@ export function recipesInSeason(recipes: Recipe[], season: Season | 'all'): Reci
   if (season === 'all') return recipes;
   return recipes.filter((r) => r.season === season || r.season === 'any');
 }
+
+export function cuisinesFromRecipes(recipes: Recipe[]): string[] {
+  const seen = new Map<string, string>();
+  for (const recipe of recipes) {
+    if (!recipe.cuisine) continue;
+    const key = recipe.cuisine.trim().toLowerCase();
+    if (key && !seen.has(key)) seen.set(key, recipe.cuisine.trim());
+  }
+  return Array.from(seen.values()).sort((a, b) => a.localeCompare(b));
+}
+
+export function difficultiesFromRecipes(recipes: Recipe[]): string[] {
+  const seen = new Map<string, string>();
+  for (const recipe of recipes) {
+    if (!recipe.difficulty) continue;
+    const key = recipe.difficulty.trim().toLowerCase();
+    if (key && !seen.has(key)) seen.set(key, recipe.difficulty.trim());
+  }
+  return Array.from(seen.values()).sort((a, b) => a.localeCompare(b));
+}

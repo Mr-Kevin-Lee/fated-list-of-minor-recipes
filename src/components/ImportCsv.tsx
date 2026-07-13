@@ -4,6 +4,8 @@ import { parseCsv, mapRowsToRecipes, type ParsedCsv, type ColumnMapping } from '
 
 interface ImportCsvProps {
   onImport: (recipes: Omit<Recipe, 'id'>[]) => void;
+  ingredientVocabulary: string[];
+  cuisineVocabulary: string[];
 }
 
 const NONE = '';
@@ -28,7 +30,11 @@ function guessMapping(headers: string[]): ColumnMapping {
   };
 }
 
-export default function ImportCsv({ onImport }: ImportCsvProps) {
+export default function ImportCsv({
+  onImport,
+  ingredientVocabulary,
+  cuisineVocabulary,
+}: ImportCsvProps) {
   const [parsed, setParsed] = useState<ParsedCsv | null>(null);
   const [mapping, setMapping] = useState<ColumnMapping>({
     name: '',
@@ -50,11 +56,17 @@ export default function ImportCsv({ onImport }: ImportCsvProps) {
 
   function handleImport() {
     if (!parsed) return;
-    const { recipes, unrecognizedSeasonRows } = mapRowsToRecipes(parsed.rows, mapping);
+    const { recipes, unrecognizedSeasonRows, corrections } = mapRowsToRecipes(parsed.rows, mapping, {
+      ingredients: ingredientVocabulary,
+      cuisines: cuisineVocabulary,
+    });
     onImport(recipes);
     let message = `Imported ${recipes.length} recipe(s).`;
     if (unrecognizedSeasonRows.length > 0) {
       message += ` Unrecognized season, defaulted to "Any": ${unrecognizedSeasonRows.join(', ')}.`;
+    }
+    if (corrections.length > 0) {
+      message += ` Spelling corrected: ${corrections.join('; ')}.`;
     }
     setResult(message);
     setParsed(null);
