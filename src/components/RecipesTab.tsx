@@ -145,7 +145,10 @@ export default function RecipesTab({
           <li key={recipe.id} className="recipe-list-item">
             <div>
               <strong>{recipe.name}</strong>
-              <span className="recipe-season"> · {recipe.season}</span>
+              <span className="recipe-season">
+                {' '}
+                · {recipe.seasons.length === 0 ? 'any season' : recipe.seasons.join(', ')}
+              </span>
               {recipe.cuisine && <span className="recipe-season"> · {recipe.cuisine}</span>}
               {recipe.difficulty && <span className="recipe-season"> · {recipe.difficulty}</span>}
               {sort !== 'name' && (
@@ -156,21 +159,19 @@ export default function RecipesTab({
                 </div>
               )}
               <div className="recipe-ingredients">{recipe.ingredients.join(', ')}</div>
-              {recipe.link && (
-                <div className="recipe-link">
-                  {(() => {
-                    const kind = classifyRecipeLink(recipe.link);
-                    if (kind === 'pbe') return <span>No-Recipe Recipe</span>;
-                    if (kind === 'url')
-                      return (
-                        <a href={recipe.link} target="_blank" rel="noreferrer">
-                          View recipe ↗
-                        </a>
-                      );
-                    return <span>{recipe.link}</span>;
-                  })()}
-                </div>
-              )}
+              <div className="recipe-link">
+                {(() => {
+                  const kind = classifyRecipeLink(recipe.link);
+                  if (kind === 'pbe') return <span>No-Recipe Recipe</span>;
+                  if (kind === 'url')
+                    return (
+                      <a href={recipe.link} target="_blank" rel="noreferrer">
+                        View recipe ↗
+                      </a>
+                    );
+                  return <span>{recipe.link}</span>;
+                })()}
+              </div>
             </div>
             <div className="recipe-list-actions">
               {menuRecipeIds.has(recipe.id) ? (

@@ -1,6 +1,5 @@
 import { useId, useState } from 'react';
 import { normalizeIngredient } from '../lib/matching';
-import { closestMatch } from '../lib/spellcheck';
 
 interface IngredientTagInputProps {
   items: string[];
@@ -19,11 +18,14 @@ export default function IngredientTagInput({
   const listId = useId();
 
   function addDraft() {
-    const normalized = normalizeIngredient(draft);
-    if (!normalized) return;
-    // Correct likely typos against known ingredient spellings (e.g. "onoin" → "onion").
-    const value = closestMatch(normalized, suggestions) ?? normalized;
-    if (!items.some((item) => normalizeIngredient(item) === normalizeIngredient(value))) {
+    // Casing/singularization only (deterministic) — never silently override what the user typed
+    // against a fuzzy "closest existing spelling" guess. That guess can itself be a typo (e.g. a
+    // bad CSV import), which would otherwise make it impossible to type the *correct* spelling
+    // once a wrong one is already in the vocabulary. Existing spellings are still suggested via
+    // the datalist below — the user chooses, nothing is forced.
+    const value = normalizeIngredient(draft);
+    if (!value) return;
+    if (!items.some((item) => normalizeIngredient(item) === value)) {
       onChange([...items, value]);
     }
     setDraft('');

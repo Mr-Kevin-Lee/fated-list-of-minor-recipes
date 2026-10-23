@@ -2,10 +2,16 @@ export type Season = 'spring' | 'summer' | 'fall' | 'winter' | 'any';
 
 export const SEASONS: Season[] = ['spring', 'summer', 'fall', 'winter', 'any'];
 
+/** A recipe's `seasons` field only ever holds concrete seasons — "any" is represented by an empty array, not a value in it. */
+export type ConcreteSeason = Exclude<Season, 'any'>;
+
+export const CONCRETE_SEASONS: ConcreteSeason[] = ['spring', 'summer', 'fall', 'winter'];
+
 export interface Recipe {
   id: string;
   name: string;
-  season: Season;
+  /** Which seasons this recipe fits. Empty array = any season (a recipe can belong to several, not just one). */
+  seasons: ConcreteSeason[];
   ingredients: string[];
   cuisine?: string;
   difficulty?: string;
