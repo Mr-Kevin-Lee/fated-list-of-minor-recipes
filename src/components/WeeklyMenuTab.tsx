@@ -59,7 +59,8 @@ export default function WeeklyMenuTab({
   return (
     <div className="weekly-menu-tab">
       <button type="button" onClick={() => setShowPicker((v) => !v)}>
-        + Add to Menu
+        <i className="ti ti-plus" aria-hidden="true" />
+        Add to Menu
       </button>
 
       {showPicker && (
@@ -99,15 +100,19 @@ export default function WeeklyMenuTab({
 
               <div className="menu-item-actions">
                 <button type="button" onClick={() => onAddIngredientsToGroceryList(recipe)}>
-                  Add ingredients to grocery list
+                  <i className="ti ti-shopping-cart-plus" aria-hidden="true" />
+                  Add to grocery list
                 </button>
                 <button type="button" className="secondary" onClick={() => onMarkCooked(entry.recipeId)}>
+                  <i className="ti ti-tools-kitchen-2" aria-hidden="true" />
                   Mark cooked
                 </button>
                 <button type="button" className="secondary" onClick={() => startSkip(recipe)}>
+                  <i className="ti ti-player-skip-forward" aria-hidden="true" />
                   Mark skipped
                 </button>
                 <button type="button" className="secondary" onClick={() => onRemoveRecipe(entry.recipeId)}>
+                  <i className="ti ti-x" aria-hidden="true" />
                   Remove
                 </button>
               </div>
@@ -127,6 +132,7 @@ export default function WeeklyMenuTab({
                   ))}
                   <div className="form-actions">
                     <button type="button" onClick={confirmSkip}>
+                      <i className="ti ti-check" aria-hidden="true" />
                       Confirm skip
                     </button>
                     <button type="button" className="secondary" onClick={() => setSkippingRecipeId(null)}>
@@ -141,6 +147,7 @@ export default function WeeklyMenuTab({
       </ul>
 
       <button type="button" className="danger" onClick={handleStartNewWeek}>
+        <i className="ti ti-refresh" aria-hidden="true" />
         Start New Week
       </button>
     </div>

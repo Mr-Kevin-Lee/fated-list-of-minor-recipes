@@ -8,7 +8,9 @@ interface SettingsPanelProps {
 export default function SettingsPanel({ settings, onChange }: SettingsPanelProps) {
   return (
     <details className="settings-panel">
-      <summary>"Almost makeable" threshold</summary>
+      <summary>
+        <i className="ti ti-adjustments" aria-hidden="true" /> "Almost makeable" threshold
+      </summary>
       <div className="settings-body">
         <label className="radio-label">
           <input

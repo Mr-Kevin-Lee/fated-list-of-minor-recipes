@@ -8,6 +8,9 @@ import {
   sortRecipes,
 } from '../lib/recipes';
 import { classifyRecipeLink } from '../lib/recipeLink';
+import { cuisineFlag } from '../lib/cuisineFlag';
+import { ANY_SEASON_ICONS, seasonIcon } from '../lib/seasonIcon';
+import { difficultyStars } from '../lib/difficultyStars';
 import RecipeForm from './RecipeForm';
 import ImportCsv from './ImportCsv';
 
@@ -73,7 +76,8 @@ export default function RecipesTab({
   return (
     <div className="recipes-tab">
       <button type="button" onClick={() => setEditing('new')}>
-        + Add recipe
+        <i className="ti ti-plus" aria-hidden="true" />
+        Add recipe
       </button>
 
       <ImportCsv
@@ -145,12 +149,48 @@ export default function RecipesTab({
           <li key={recipe.id} className="recipe-list-item">
             <div>
               <strong>{recipe.name}</strong>
-              <span className="recipe-season">
-                {' '}
-                · {recipe.seasons.length === 0 ? 'any season' : recipe.seasons.join(', ')}
-              </span>
-              {recipe.cuisine && <span className="recipe-season"> · {recipe.cuisine}</span>}
-              {recipe.difficulty && <span className="recipe-season"> · {recipe.difficulty}</span>}
+              <div className="recipe-badges">
+                <span className="badge badge--season">
+                  {recipe.seasons.length === 0
+                    ? ANY_SEASON_ICONS.map((icon) => (
+                        <i key={icon} className={`ti ${icon}`} aria-hidden="true" />
+                      ))
+                    : recipe.seasons.map((s) => (
+                        <i key={s} className={`ti ${seasonIcon(s)}`} aria-hidden="true" />
+                      ))}
+                  {recipe.seasons.length === 0 ? 'any season' : recipe.seasons.join(', ')}
+                </span>
+                {recipe.cuisine &&
+                  (() => {
+                    const flag = cuisineFlag(recipe.cuisine);
+                    return (
+                      <span className="badge">
+                        {flag ? (
+                          <span aria-hidden="true">{flag}</span>
+                        ) : (
+                          <i className="ti ti-map-pin" aria-hidden="true" />
+                        )}
+                        {recipe.cuisine}
+                      </span>
+                    );
+                  })()}
+                {recipe.difficulty &&
+                  (() => {
+                    const stars = difficultyStars(recipe.difficulty);
+                    return (
+                      <span className="badge">
+                        {stars ? (
+                          Array.from({ length: stars }).map((_, i) => (
+                            <i key={i} className="ti ti-star" aria-hidden="true" />
+                          ))
+                        ) : (
+                          <i className="ti ti-chef-hat" aria-hidden="true" />
+                        )}
+                        {recipe.difficulty}
+                      </span>
+                    );
+                  })()}
+              </div>
               {sort !== 'name' && (
                 <div className="recipe-last-made">
                   {recipe.lastMadeAt
@@ -162,11 +202,16 @@ export default function RecipesTab({
               <div className="recipe-link">
                 {(() => {
                   const kind = classifyRecipeLink(recipe.link);
-                  if (kind === 'pbe') return <span>No-Recipe Recipe</span>;
+                  if (kind === 'pbe')
+                    return (
+                      <span>
+                        <i className="ti ti-mood-smile" aria-hidden="true" /> No-Recipe Recipe
+                      </span>
+                    );
                   if (kind === 'url')
                     return (
                       <a href={recipe.link} target="_blank" rel="noreferrer">
-                        View recipe ↗
+                        <i className="ti ti-external-link" aria-hidden="true" /> View recipe
                       </a>
                     );
                   return <span>{recipe.link}</span>;
@@ -176,17 +221,21 @@ export default function RecipesTab({
             <div className="recipe-list-actions">
               {menuRecipeIds.has(recipe.id) ? (
                 <button type="button" className="secondary" disabled>
-                  On Menu ✓
+                  <i className="ti ti-check" aria-hidden="true" />
+                  On Menu
                 </button>
               ) : (
                 <button type="button" onClick={() => onAddToMenu(recipe.id)}>
-                  + Add to Menu
+                  <i className="ti ti-calendar-plus" aria-hidden="true" />
+                  Add to Menu
                 </button>
               )}
-              <button type="button" onClick={() => setEditing(recipe)}>
+              <button type="button" className="secondary" onClick={() => setEditing(recipe)}>
+                <i className="ti ti-edit" aria-hidden="true" />
                 Edit
               </button>
               <button type="button" className="secondary" onClick={() => onDelete(recipe.id)}>
+                <i className="ti ti-trash" aria-hidden="true" />
                 Delete
               </button>
             </div>

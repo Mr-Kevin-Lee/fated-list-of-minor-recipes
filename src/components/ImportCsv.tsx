@@ -105,7 +105,9 @@ export default function ImportCsv({
 
   return (
     <details className="import-csv">
-      <summary>Import recipes from CSV</summary>
+      <summary>
+        <i className="ti ti-file-import" aria-hidden="true" /> Import recipes from CSV
+      </summary>
       <div className="import-csv-body">
         <p className="empty-state">
           Export your Google Sheet as CSV (File → Download → Comma Separated Values), then upload
@@ -132,6 +134,7 @@ export default function ImportCsv({
             {optionalSelect('link', 'Link column')}
             <p className="empty-state">{parsed.rows.length} row(s) found.</p>
             <button type="button" onClick={handleImport}>
+              <i className="ti ti-upload" aria-hidden="true" />
               Import
             </button>
           </div>

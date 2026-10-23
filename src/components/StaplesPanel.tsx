@@ -9,7 +9,9 @@ interface StaplesPanelProps {
 export default function StaplesPanel({ staples, onChange, ingredientSuggestions }: StaplesPanelProps) {
   return (
     <details className="settings-panel">
-      <summary>Pantry staples ({staples.length})</summary>
+      <summary>
+        <i className="ti ti-salt" aria-hidden="true" /> Pantry staples ({staples.length})
+      </summary>
       <div className="settings-body">
         <p className="empty-state">
           Staples are always assumed on hand — they're excluded from matching and grocery lists

@@ -156,15 +156,19 @@ export default function App() {
         <h1>Fated List of Minor Recipes</h1>
         <nav className="tabs">
           <button className={tab === 'pantry' ? 'active' : ''} onClick={() => setTab('pantry')}>
+            <i className="ti ti-basket" aria-hidden="true" />
             Pantry
           </button>
           <button className={tab === 'recipes' ? 'active' : ''} onClick={() => setTab('recipes')}>
+            <i className="ti ti-book-2" aria-hidden="true" />
             Recipes
           </button>
           <button className={tab === 'menu' ? 'active' : ''} onClick={() => setTab('menu')}>
+            <i className="ti ti-calendar-week" aria-hidden="true" />
             Weekly Menu
           </button>
           <button className={tab === 'grocery' ? 'active' : ''} onClick={() => setTab('grocery')}>
+            <i className="ti ti-shopping-cart" aria-hidden="true" />
             Grocery List
           </button>
         </nav>

@@ -4,20 +4,21 @@ interface MatchResultsProps {
   matches: RecipeMatch[];
 }
 
-const SECTIONS: { status: RecipeMatch['status']; label: string }[] = [
-  { status: 'makeable', label: 'Makeable' },
-  { status: 'almost', label: 'Almost makeable' },
-  { status: 'missing', label: 'Missing' },
+const SECTIONS: { status: RecipeMatch['status']; label: string; icon: string }[] = [
+  { status: 'makeable', label: 'Makeable', icon: 'ti-check' },
+  { status: 'almost', label: 'Almost makeable', icon: 'ti-hourglass' },
+  { status: 'missing', label: 'Missing', icon: 'ti-alert-circle' },
 ];
 
 export default function MatchResults({ matches }: MatchResultsProps) {
   return (
     <div className="match-results">
-      {SECTIONS.map(({ status, label }) => {
+      {SECTIONS.map(({ status, label, icon }) => {
         const group = matches.filter((m) => m.status === status);
         return (
           <section key={status} className={`match-section match-section--${status}`}>
             <h3>
+              <i className={`ti ${icon}`} aria-hidden="true" />
               {label} <span className="match-count">({group.length})</span>
             </h3>
             {group.length === 0 && <p className="empty-state">None</p>}

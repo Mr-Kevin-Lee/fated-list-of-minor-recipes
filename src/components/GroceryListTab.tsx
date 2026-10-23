@@ -13,8 +13,8 @@ export default function GroceryListTab({ groceryList, recipes, onCheckOff }: Gro
     <div className="grocery-list-tab">
       {groceryList.length === 0 && (
         <p className="empty-state">
-          Nothing on the list. Add recipes to the Weekly Menu, then "add ingredients to grocery
-          list" from there.
+          <i className="ti ti-shopping-cart-off" aria-hidden="true" /> Nothing on the list. Add
+          recipes to the Weekly Menu, then "add ingredients to grocery list" from there.
         </p>
       )}
       <ul className="grocery-list">
