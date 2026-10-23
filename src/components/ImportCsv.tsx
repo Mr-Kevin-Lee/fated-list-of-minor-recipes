@@ -56,17 +56,17 @@ export default function ImportCsv({
 
   function handleImport() {
     if (!parsed) return;
-    const { recipes, unrecognizedSeasonRows, corrections } = mapRowsToRecipes(parsed.rows, mapping, {
+    const { recipes, unrecognizedSeasonTokens, possibleTypos } = mapRowsToRecipes(parsed.rows, mapping, {
       ingredients: ingredientVocabulary,
       cuisines: cuisineVocabulary,
     });
     onImport(recipes);
     let message = `Imported ${recipes.length} recipe(s).`;
-    if (unrecognizedSeasonRows.length > 0) {
-      message += ` Unrecognized season, defaulted to "Any": ${unrecognizedSeasonRows.join(', ')}.`;
+    if (unrecognizedSeasonTokens.length > 0) {
+      message += ` Unrecognized season values, skipped: ${unrecognizedSeasonTokens.join(', ')}.`;
     }
-    if (corrections.length > 0) {
-      message += ` Spelling corrected: ${corrections.join('; ')}.`;
+    if (possibleTypos.length > 0) {
+      message += ` Nothing was auto-changed, but check these for typos: ${possibleTypos.join('; ')}.`;
     }
     setResult(message);
     setParsed(null);
@@ -109,7 +109,9 @@ export default function ImportCsv({
       <div className="import-csv-body">
         <p className="empty-state">
           Export your Google Sheet as CSV (File → Download → Comma Separated Values), then upload
-          it here. Ingredients should be comma-separated within their cell.
+          it here. Ingredients should be comma-separated within their cell. A recipe can belong to
+          multiple seasons — list them separated by commas, slashes, or semicolons (e.g. "Spring,
+          Fall"); leave blank or use "any"/"all" for any season.
         </p>
         <input
           type="file"

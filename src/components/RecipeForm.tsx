@@ -1,8 +1,7 @@
 import { useId, useState, type FormEvent } from 'react';
-import type { Recipe, Season } from '../types';
-import { SEASONS } from '../types';
+import type { ConcreteSeason, Recipe } from '../types';
+import { CONCRETE_SEASONS } from '../types';
 import { titleCase } from '../lib/textCase';
-import { closestMatch } from '../lib/spellcheck';
 import IngredientTagInput from './IngredientTagInput';
 
 const DIFFICULTY_OPTIONS = ['Easy', 'Medium', 'Hard'];
@@ -24,7 +23,7 @@ export default function RecipeForm({
 }: RecipeFormProps) {
   const cuisineListId = useId();
   const [name, setName] = useState(initial?.name ?? '');
-  const [season, setSeason] = useState<Season>(initial?.season ?? 'any');
+  const [seasons, setSeasons] = useState<ConcreteSeason[]>(initial?.seasons ?? []);
   const [ingredients, setIngredients] = useState<string[]>(initial?.ingredients ?? []);
   const [cuisine, setCuisine] = useState(initial?.cuisine ?? '');
   const [difficulty, setDifficulty] = useState(initial?.difficulty ?? '');
@@ -33,14 +32,13 @@ export default function RecipeForm({
   function handleSubmit(e: FormEvent) {
     e.preventDefault();
     if (!name.trim() || ingredients.length === 0) return;
-    // Correct likely cuisine typos against previously-used cuisines (e.g. "itallian" → "Italian").
-    const cuisineValue = cuisine.trim()
-      ? (closestMatch(titleCase(cuisine), cuisineSuggestions) ?? titleCase(cuisine))
-      : undefined;
+    // Title-case only — never silently override the typed spelling against a fuzzy guess.
+    // Existing cuisines are still suggested via the datalist below; the user chooses.
+    const cuisineValue = cuisine.trim() ? titleCase(cuisine) : undefined;
     onSave({
       id: initial?.id,
       name: titleCase(name),
-      season,
+      seasons,
       ingredients,
       cuisine: cuisineValue,
       difficulty: difficulty.trim() || undefined,
@@ -62,14 +60,23 @@ export default function RecipeForm({
       </label>
 
       <label>
-        Season
-        <select value={season} onChange={(e) => setSeason(e.target.value as Season)}>
-          {SEASONS.map((s) => (
-            <option key={s} value={s}>
-              {s === 'any' ? 'Any season' : s[0].toUpperCase() + s.slice(1)}
-            </option>
+        Seasons <span className="optional-tag">(none checked = any season)</span>
+        <div className="season-checkboxes">
+          {CONCRETE_SEASONS.map((s) => (
+            <label key={s} className="checkbox-label">
+              <input
+                type="checkbox"
+                checked={seasons.includes(s)}
+                onChange={() =>
+                  setSeasons((prev) =>
+                    prev.includes(s) ? prev.filter((x) => x !== s) : [...prev, s],
+                  )
+                }
+              />
+              {s[0].toUpperCase() + s.slice(1)}
+            </label>
           ))}
-        </select>
+        </div>
       </label>
 
       <label>
@@ -113,12 +120,12 @@ export default function RecipeForm({
       </label>
 
       <label>
-        Link <span className="optional-tag">(optional)</span>
+        Link <span className="optional-tag">(blank = play it by ear)</span>
         <input
           type="text"
           value={link}
           onChange={(e) => setLink(e.target.value)}
-          placeholder="https://… or PBE or a cookbook name"
+          placeholder="https://… or a cookbook name"
         />
       </label>
 

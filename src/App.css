@@ -309,6 +309,17 @@ button.danger {
   margin-bottom: 0.35rem;
 }
 
+.season-checkboxes {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem 1rem;
+  margin-top: 0.35rem;
+}
+
+.season-checkboxes .checkbox-label {
+  margin-bottom: 0;
+}
+
 .grocery-item-recipes {
   color: #a89;
   font-size: 0.8rem;

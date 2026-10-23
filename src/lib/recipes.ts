@@ -1,9 +1,18 @@
 import { store, KEYS } from './db';
-import type { Recipe, RecipeSort, Season } from '../types';
+import type { ConcreteSeason, Recipe, RecipeSort, Season } from '../types';
+
+/** Reads a recipe as stored, migrating the old single `season` field (pre-multi-season) to `seasons` if needed. */
+function migrateRecipe(stored: Recipe & { season?: Season }): Recipe {
+  if (Array.isArray(stored.seasons)) return stored;
+  const legacySeason = stored.season;
+  const seasons: ConcreteSeason[] = legacySeason && legacySeason !== 'any' ? [legacySeason] : [];
+  const { season: _season, ...rest } = stored;
+  return { ...rest, seasons };
+}
 
 export async function getRecipes(): Promise<Recipe[]> {
   const recipes = await store.getItem<Recipe[]>(KEYS.recipes);
-  return recipes ?? [];
+  return (recipes ?? []).map(migrateRecipe);
 }
 
 export async function saveRecipe(recipe: Omit<Recipe, 'id'> & { id?: string }): Promise<Recipe> {
@@ -74,8 +83,8 @@ export function ingredientNamesFromRecipes(recipes: Recipe[]): string[] {
 }
 
 export function recipesInSeason(recipes: Recipe[], season: Season | 'all'): Recipe[] {
-  if (season === 'all') return recipes;
-  return recipes.filter((r) => r.season === season || r.season === 'any');
+  if (season === 'all' || season === 'any') return recipes;
+  return recipes.filter((r) => r.seasons.length === 0 || r.seasons.includes(season));
 }
 
 export function cuisinesFromRecipes(recipes: Recipe[]): string[] {
