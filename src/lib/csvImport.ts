@@ -1,6 +1,6 @@
 import Papa from 'papaparse';
-import type { Recipe, Season } from '../types';
-import { SEASONS } from '../types';
+import type { ConcreteSeason, Recipe } from '../types';
+import { CONCRETE_SEASONS } from '../types';
 import { titleCase } from './textCase';
 import { normalizeIngredient } from './matching';
 import { closestMatch } from './spellcheck';
@@ -37,25 +37,51 @@ export interface ImportVocabulary {
   cuisines: string[];
 }
 
-const SEASON_ALIASES: Record<string, Season> = {
+const SEASON_ALIASES: Record<string, ConcreteSeason> = {
   spring: 'spring',
   summer: 'summer',
   fall: 'fall',
   autumn: 'fall',
   winter: 'winter',
-  any: 'any',
-  all: 'any',
-  'all seasons': 'any',
-  '': 'any',
 };
+
+const ANY_SEASON_TOKENS = new Set(['any', 'all', 'all seasons', '']);
 
 const DIFFICULTY_CANONICAL = ['Easy', 'Medium', 'Hard'];
 
-function normalizeSeason(value: string | undefined): { season: Season; recognized: boolean } {
-  const key = (value ?? '').trim().toLowerCase();
-  const match = SEASON_ALIASES[key] ?? (SEASONS.includes(key as Season) ? (key as Season) : undefined);
-  if (match) return { season: match, recognized: true };
-  return { season: 'any', recognized: key === '' };
+/**
+ * Parses a cell that may list multiple seasons (comma/semicolon/slash-separated), e.g.
+ * "Spring, Fall". A recipe can belong to several seasons at once — an empty result means "any
+ * season", same as if any token in the cell was literally "any"/"all" (which takes precedence
+ * over specific seasons listed alongside it, since it's a superset of them).
+ */
+function parseSeasons(value: string | undefined): { seasons: ConcreteSeason[]; unrecognized: string[] } {
+  const trimmed = (value ?? '').trim();
+  if (!trimmed) return { seasons: [], unrecognized: [] };
+
+  const tokens = trimmed.split(/[,/;]+/).map((t) => t.trim()).filter(Boolean);
+  const seasons = new Set<ConcreteSeason>();
+  const unrecognized: string[] = [];
+  let any = false;
+
+  for (const token of tokens) {
+    const key = token.toLowerCase();
+    if (ANY_SEASON_TOKENS.has(key)) {
+      any = true;
+      continue;
+    }
+    const alias = SEASON_ALIASES[key];
+    if (alias) {
+      seasons.add(alias);
+    } else if (CONCRETE_SEASONS.includes(key as ConcreteSeason)) {
+      seasons.add(key as ConcreteSeason);
+    } else {
+      unrecognized.push(token);
+    }
+  }
+
+  if (any) return { seasons: [], unrecognized };
+  return { seasons: Array.from(seasons), unrecognized };
 }
 
 /** Matches a free-text difficulty value to Easy/Medium/Hard case-insensitively; leaves anything else as-is (custom). */
@@ -72,8 +98,9 @@ function optionalField(row: Record<string, string>, column: string): string | un
 
 export interface ImportResult {
   recipes: Omit<Recipe, 'id'>[];
-  unrecognizedSeasonRows: string[];
-  corrections: string[];
+  unrecognizedSeasonTokens: string[];
+  /** Near-duplicate spellings spotted during import — flagged for you to check, never auto-changed. */
+  possibleTypos: string[];
 }
 
 export function mapRowsToRecipes(
@@ -82,10 +109,11 @@ export function mapRowsToRecipes(
   vocabulary: ImportVocabulary = { ingredients: [], cuisines: [] },
 ): ImportResult {
   const recipes: Omit<Recipe, 'id'>[] = [];
-  const unrecognizedSeasonRows: string[] = [];
-  const corrections: string[] = [];
+  const unrecognizedSeasonTokens: string[] = [];
+  const possibleTypos: string[] = [];
 
-  // Grows as we go, so later rows in the same file benefit from spellings fixed in earlier rows too.
+  // Grows as we go, purely so later rows can be flagged against spellings seen earlier in this
+  // same file too — never used to rewrite anything, only to spot and report likely near-duplicates.
   const ingredientVocab = [...vocabulary.ingredients];
   const cuisineVocab = [...vocabulary.cuisines];
 
@@ -98,34 +126,36 @@ export function mapRowsToRecipes(
     const ingredients = (row[mapping.ingredients] ?? '')
       .split(',')
       .map((raw) => {
-        const normalized = normalizeIngredient(raw);
-        if (!normalized) return '';
-        const corrected = closestMatch(normalized, ingredientVocab);
-        if (corrected && corrected !== normalized) {
-          corrections.push(`"${normalized}" → "${corrected}" (${name})`);
+        const value = normalizeIngredient(raw);
+        if (!value) return '';
+        const similar = closestMatch(value, ingredientVocab);
+        if (similar) {
+          possibleTypos.push(`"${value}" looks similar to existing "${similar}" (${name})`);
         }
-        const final = corrected ?? normalized;
-        if (!ingredientVocab.includes(final)) ingredientVocab.push(final);
-        return final;
+        if (!ingredientVocab.includes(value)) ingredientVocab.push(value);
+        return value;
       })
       .filter((s) => {
         if (!s || seenIngredients.has(s)) return false;
         seenIngredients.add(s);
         return true;
       });
-    if (ingredients.length === 0) continue;
 
-    const { season, recognized } = normalizeSeason(mapping.season ? row[mapping.season] : undefined);
-    if (mapping.season && !recognized) unrecognizedSeasonRows.push(name);
+    const { seasons, unrecognized: unrecognizedSeasons } = parseSeasons(
+      mapping.season ? row[mapping.season] : undefined,
+    );
+    for (const token of unrecognizedSeasons) {
+      unrecognizedSeasonTokens.push(`"${token}" (${name})`);
+    }
 
-    let cuisine = optionalField(row, mapping.cuisine);
-    if (cuisine) {
-      const titled = titleCase(cuisine);
-      const corrected = closestMatch(titled, cuisineVocab);
-      if (corrected && corrected !== titled) {
-        corrections.push(`"${titled}" → "${corrected}" cuisine (${name})`);
+    const rawCuisine = optionalField(row, mapping.cuisine);
+    let cuisine: string | undefined;
+    if (rawCuisine) {
+      cuisine = titleCase(rawCuisine);
+      const similar = closestMatch(cuisine, cuisineVocab);
+      if (similar) {
+        possibleTypos.push(`"${cuisine}" cuisine looks similar to existing "${similar}" (${name})`);
       }
-      cuisine = corrected ?? titled;
       if (!cuisineVocab.includes(cuisine)) cuisineVocab.push(cuisine);
     }
 
@@ -135,12 +165,12 @@ export function mapRowsToRecipes(
     recipes.push({
       name,
       ingredients,
-      season,
+      seasons,
       cuisine,
       difficulty,
       link: optionalField(row, mapping.link),
     });
   }
 
-  return { recipes, unrecognizedSeasonRows, corrections };
+  return { recipes, unrecognizedSeasonTokens, possibleTypos };
 }
