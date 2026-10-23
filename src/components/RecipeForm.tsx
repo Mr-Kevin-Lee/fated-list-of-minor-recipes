@@ -2,6 +2,7 @@ import { useId, useState, type FormEvent } from 'react';
 import type { ConcreteSeason, Recipe } from '../types';
 import { CONCRETE_SEASONS } from '../types';
 import { titleCase } from '../lib/textCase';
+import { seasonIcon } from '../lib/seasonIcon';
 import IngredientTagInput from './IngredientTagInput';
 
 const DIFFICULTY_OPTIONS = ['Easy', 'Medium', 'Hard'];
@@ -73,6 +74,7 @@ export default function RecipeForm({
                   )
                 }
               />
+              <i className={`ti ${seasonIcon(s)}`} aria-hidden="true" />
               {s[0].toUpperCase() + s.slice(1)}
             </label>
           ))}

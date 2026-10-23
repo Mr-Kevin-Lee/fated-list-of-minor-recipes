@@ -46,7 +46,7 @@ export default function PantryTab({
   return (
     <div className="pantry-tab">
       <label>
-        Pantry
+        <i className="ti ti-basket" aria-hidden="true" /> Pantry
         <IngredientTagInput
           items={pantry.items}
           onChange={onPantryChange}
