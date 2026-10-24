@@ -19,6 +19,8 @@ interface PantryTabProps {
   ingredientSuggestions: string[];
   staples: string[];
   onStaplesChange: (staples: string[]) => void;
+  menuRecipeIds: Set<string>;
+  onAddToMenu: (recipeId: string) => void;
 }
 
 export default function PantryTab({
@@ -32,6 +34,8 @@ export default function PantryTab({
   ingredientSuggestions,
   staples,
   onStaplesChange,
+  menuRecipeIds,
+  onAddToMenu,
 }: PantryTabProps) {
   const filteredRecipes = useMemo(
     () => recipesInSeason(recipes, seasonFilter),
@@ -81,7 +85,7 @@ export default function PantryTab({
       {recipes.length === 0 ? (
         <p className="empty-state">Add some recipes first, then come back here.</p>
       ) : (
-        <MatchResults matches={matches} />
+        <MatchResults matches={matches} menuRecipeIds={menuRecipeIds} onAddToMenu={onAddToMenu} />
       )}
     </div>
   );

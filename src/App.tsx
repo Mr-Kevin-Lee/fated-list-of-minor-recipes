@@ -187,6 +187,8 @@ export default function App() {
             ingredientSuggestions={ingredientSuggestions}
             staples={staples}
             onStaplesChange={handleStaplesChange}
+            menuRecipeIds={menuRecipeIds}
+            onAddToMenu={handleAddRecipeToMenu}
           />
         )}
         {tab === 'recipes' && (
