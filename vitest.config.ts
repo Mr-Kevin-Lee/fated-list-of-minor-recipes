@@ -4,10 +4,12 @@ export default defineConfig({
   test: {
     environment: 'node',
     include: ['src/**/*.test.ts'],
+    setupFiles: ['src/test/setup.ts'],
     coverage: {
       provider: 'v8',
       reporter: ['text', 'html', 'lcov'],
       include: ['src/lib/**/*.ts'],
+      thresholds: { statements: 100, functions: 100, lines: 100, branches: 95 },
     },
   },
 });

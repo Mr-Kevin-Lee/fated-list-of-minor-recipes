@@ -1,6 +1,5 @@
 import Papa from 'papaparse';
 import type { ConcreteSeason, Recipe } from '../types';
-import { CONCRETE_SEASONS } from '../types';
 import { titleCase } from './textCase';
 import { normalizeIngredient } from './matching';
 import { closestMatch } from './spellcheck';
@@ -73,8 +72,6 @@ function parseSeasons(value: string | undefined): { seasons: ConcreteSeason[]; u
     const alias = SEASON_ALIASES[key];
     if (alias) {
       seasons.add(alias);
-    } else if (CONCRETE_SEASONS.includes(key as ConcreteSeason)) {
-      seasons.add(key as ConcreteSeason);
     } else {
       unrecognized.push(token);
     }
