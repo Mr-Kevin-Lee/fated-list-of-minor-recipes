@@ -2,7 +2,7 @@ import { store, KEYS } from './db';
 import type { ConcreteSeason, Recipe, RecipeSort, Season } from '../types';
 
 /** Reads a recipe as stored, migrating the old single `season` field (pre-multi-season) to `seasons` if needed. */
-function migrateRecipe(stored: Recipe & { season?: Season }): Recipe {
+export function migrateRecipe(stored: Recipe & { season?: Season }): Recipe {
   if (Array.isArray(stored.seasons)) return stored;
   const legacySeason = stored.season;
   const seasons: ConcreteSeason[] = legacySeason && legacySeason !== 'any' ? [legacySeason] : [];
@@ -85,6 +85,12 @@ export function ingredientNamesFromRecipes(recipes: Recipe[]): string[] {
 export function recipesInSeason(recipes: Recipe[], season: Season | 'all'): Recipe[] {
   if (season === 'all' || season === 'any') return recipes;
   return recipes.filter((r) => r.seasons.length === 0 || r.seasons.includes(season));
+}
+
+export function searchRecipes(recipes: Recipe[], query: string): Recipe[] {
+  const q = query.trim().toLowerCase();
+  if (!q) return recipes;
+  return recipes.filter((r) => r.name.toLowerCase().includes(q));
 }
 
 export function cuisinesFromRecipes(recipes: Recipe[]): string[] {

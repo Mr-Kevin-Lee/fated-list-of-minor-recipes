@@ -360,11 +360,22 @@ button.secondary:hover {
 }
 
 .match-section li {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.75rem;
   padding: 0.7rem 0.85rem;
   background: var(--surface-1);
   border: 1px solid var(--border);
   border-radius: var(--radius-sm);
   border-left: 3px solid var(--border);
+}
+
+.match-section li button {
+  flex-shrink: 0;
+  font-size: 0.8rem;
+  padding: 0.4rem 0.65rem;
+  white-space: nowrap;
 }
 
 .match-section--makeable li {
@@ -584,6 +595,35 @@ input[type='checkbox'] {
   font-size: 0.8rem;
   color: var(--text-muted);
   margin-top: 0.2rem;
+}
+
+.recipe-search {
+  position: relative;
+  margin-top: 1rem;
+}
+
+.recipe-search i {
+  position: absolute;
+  left: 0.75rem;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--text-muted);
+  pointer-events: none;
+}
+
+.recipe-search input {
+  width: 100%;
+  padding: 0.6rem 0.7rem 0.6rem 2.2rem;
+  background: var(--surface-1);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  color: var(--text-primary);
+  font-size: 1rem;
+}
+
+.recipe-search input:focus {
+  outline: none;
+  border-color: var(--accent);
 }
 
 .recipe-filters {

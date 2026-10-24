@@ -5,6 +5,7 @@ import {
   cuisinesFromRecipes,
   difficultiesFromRecipes,
   recipesInSeason,
+  searchRecipes,
   sortRecipes,
 } from '../lib/recipes';
 import { classifyRecipeLink } from '../lib/recipeLink';
@@ -38,13 +39,14 @@ export default function RecipesTab({
   const [seasonFilter, setSeasonFilter] = useState<Season | 'all'>('all');
   const [difficultyFilter, setDifficultyFilter] = useState<string>('all');
   const [cuisineFilter, setCuisineFilter] = useState<string>('all');
+  const [search, setSearch] = useState('');
 
   const cuisineSuggestions = useMemo(() => cuisinesFromRecipes(recipes), [recipes]);
   const difficultyOptions = useMemo(() => difficultiesFromRecipes(recipes), [recipes]);
   const cuisineOptions = cuisineSuggestions;
 
   const filteredRecipes = useMemo(() => {
-    let result = recipesInSeason(recipes, seasonFilter);
+    let result = searchRecipes(recipesInSeason(recipes, seasonFilter), search);
     if (difficultyFilter !== 'all') {
       result = result.filter(
         (r) => (r.difficulty ?? '').trim().toLowerCase() === difficultyFilter,
@@ -54,7 +56,7 @@ export default function RecipesTab({
       result = result.filter((r) => (r.cuisine ?? '').trim().toLowerCase() === cuisineFilter);
     }
     return result;
-  }, [recipes, seasonFilter, difficultyFilter, cuisineFilter]);
+  }, [recipes, seasonFilter, difficultyFilter, cuisineFilter, search]);
 
   const sortedRecipes = useMemo(() => sortRecipes(filteredRecipes, sort), [filteredRecipes, sort]);
 
@@ -85,6 +87,19 @@ export default function RecipesTab({
         ingredientVocabulary={ingredientSuggestions}
         cuisineVocabulary={cuisineSuggestions}
       />
+
+      {recipes.length > 0 && (
+        <div className="recipe-search">
+          <i className="ti ti-search" aria-hidden="true" />
+          <input
+            type="search"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="Search recipes"
+            aria-label="Search recipes"
+          />
+        </div>
+      )}
 
       {recipes.length > 0 && (
         <div className="recipe-filters">
