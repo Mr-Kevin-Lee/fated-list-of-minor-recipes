@@ -22,6 +22,30 @@ describe('parseCsv', () => {
   });
 });
 
+describe('parseCsv edge cases', () => {
+  it('should_return_no_headers_for_an_empty_file', () => {
+    expect(parseCsv('').headers).toEqual([]);
+  });
+});
+
+describe('mapRowsToRecipes missing and unmapped columns', () => {
+  it('should_skip_a_row_that_has_no_name_key', () => {
+    const { recipes } = mapRowsToRecipes([{ Ingredients: 'tomato' }], baseMapping);
+    expect(recipes).toHaveLength(0);
+  });
+
+  it('should_import_a_row_that_has_no_ingredients_key_with_an_empty_list', () => {
+    const { recipes } = mapRowsToRecipes([{ Name: 'Soup' }], baseMapping);
+    expect(recipes[0].ingredients).toEqual([]);
+  });
+
+  it('should_ignore_the_season_cell_when_the_season_column_is_unmapped', () => {
+    const rows = [{ Name: 'Soup', Ingredients: 'tomato', Season: 'Fall' }];
+    const { recipes } = mapRowsToRecipes(rows, { ...baseMapping, season: '' });
+    expect(recipes[0].seasons).toEqual([]);
+  });
+});
+
 describe('mapRowsToRecipes', () => {
   it('should_skip_rows_with_no_name', () => {
     const rows = [{ Name: '', Ingredients: 'tomato' }];
@@ -123,6 +147,16 @@ describe('mapRowsToRecipes', () => {
     expect(possibleTypos).toEqual([
       '"seseame oil" looks similar to existing "sesame oil" (Soup)',
     ]);
+  });
+
+  it('should_flag_a_possible_cuisine_typo_without_changing_the_imported_value', () => {
+    const rows = [{ Name: 'Soup', Ingredients: 'tomato', Cuisine: 'itallian' }];
+    const { recipes, possibleTypos } = mapRowsToRecipes(rows, baseMapping, {
+      ingredients: [],
+      cuisines: ['Italian'],
+    });
+    expect(recipes[0].cuisine).toBe('Itallian');
+    expect(possibleTypos).toEqual(['"Itallian" cuisine looks similar to existing "Italian" (Soup)']);
   });
 
   it('should_leave_an_unmapped_optional_column_undefined', () => {

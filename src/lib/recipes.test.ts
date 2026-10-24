@@ -1,8 +1,13 @@
 import { describe, expect, it } from 'vitest';
+import { KEYS, store } from './db';
 import {
   cuisinesFromRecipes,
+  deleteRecipe,
   difficultiesFromRecipes,
+  getRecipes,
   ingredientNamesFromRecipes,
+  saveRecipe,
+  touchLastMade,
   migrateRecipe,
   recipesInSeason,
   searchRecipes,
@@ -47,6 +52,56 @@ describe('migrateRecipe', () => {
   });
 });
 
+describe('recipe storage', () => {
+  const draft = { name: 'Soup', seasons: [], ingredients: ['tomato'] };
+
+  it('should_return_empty_list_when_nothing_stored', async () => {
+    expect(await getRecipes()).toEqual([]);
+  });
+
+  it('should_migrate_legacy_single_season_recipes_on_read', async () => {
+    await store.setItem(KEYS.recipes, [{ id: 'a', name: 'Old', season: 'fall', ingredients: [] }]);
+    expect((await getRecipes())[0].seasons).toEqual(['fall']);
+  });
+
+  it('should_assign_an_id_when_creating', async () => {
+    expect((await saveRecipe(draft)).id).toBeTruthy();
+  });
+
+  it('should_persist_a_created_recipe', async () => {
+    await saveRecipe(draft);
+    expect(await getRecipes()).toHaveLength(1);
+  });
+
+  it('should_update_an_existing_recipe_in_place', async () => {
+    const created = await saveRecipe(draft);
+    await saveRecipe({ ...created, name: 'Stew' });
+    const all = await getRecipes();
+    expect(all.map((r) => r.name)).toEqual(['Stew']);
+  });
+
+  it('should_throw_when_updating_an_unknown_id', async () => {
+    await expect(saveRecipe({ ...draft, id: 'missing' })).rejects.toThrow('Recipe not found: missing');
+  });
+
+  it('should_delete_only_the_given_recipe', async () => {
+    const a = await saveRecipe(draft);
+    await saveRecipe({ ...draft, name: 'Other' });
+    await deleteRecipe(a.id);
+    expect((await getRecipes()).map((r) => r.name)).toEqual(['Other']);
+  });
+
+  it('should_stamp_lastMadeAt_when_touched', async () => {
+    const created = await saveRecipe(draft);
+    const touched = await touchLastMade(created.id);
+    expect(Number.isNaN(Date.parse(touched!.lastMadeAt!))).toBe(false);
+  });
+
+  it('should_return_undefined_when_touching_an_unknown_id', async () => {
+    expect(await touchLastMade('missing')).toBeUndefined();
+  });
+});
+
 describe('sortRecipes', () => {
   it('should_sort_by_name_alphabetically', () => {
     const recipes = [makeRecipe({ name: 'Zucchini' }), makeRecipe({ name: 'Apple' })];
@@ -86,6 +141,32 @@ describe('sortRecipes', () => {
       makeRecipe({ name: 'Older', lastMadeAt: '2024-01-01T00:00:00Z' }),
     ];
     expect(sortRecipes(recipes, 'least-recent').map((r) => r.name)).toEqual(['Older', 'Newer']);
+  });
+
+  it('should_keep_input_order_for_never_made_recipes_when_sort_is_recent', () => {
+    const recipes = [makeRecipe({ name: 'A' }), makeRecipe({ name: 'B' })];
+    expect(sortRecipes(recipes, 'recent').map((r) => r.name)).toEqual(['A', 'B']);
+  });
+
+  it('should_keep_input_order_for_never_made_recipes_when_sort_is_least_recent', () => {
+    const recipes = [makeRecipe({ name: 'A' }), makeRecipe({ name: 'B' })];
+    expect(sortRecipes(recipes, 'least-recent').map((r) => r.name)).toEqual(['A', 'B']);
+  });
+
+  it('should_put_made_recipes_before_never_made_regardless_of_input_order_when_sort_is_recent', () => {
+    const made = makeRecipe({ name: 'Made', lastMadeAt: '2024-01-01T00:00:00Z' });
+    const never = makeRecipe({ name: 'Never' });
+    const forward = sortRecipes([made, never], 'recent').map((r) => r.name);
+    const reverse = sortRecipes([never, made], 'recent').map((r) => r.name);
+    expect([forward, reverse]).toEqual([['Made', 'Never'], ['Made', 'Never']]);
+  });
+
+  it('should_put_never_made_before_made_regardless_of_input_order_when_sort_is_least_recent', () => {
+    const made = makeRecipe({ name: 'Made', lastMadeAt: '2024-01-01T00:00:00Z' });
+    const never = makeRecipe({ name: 'Never' });
+    const forward = sortRecipes([made, never], 'least-recent').map((r) => r.name);
+    const reverse = sortRecipes([never, made], 'least-recent').map((r) => r.name);
+    expect([forward, reverse]).toEqual([['Never', 'Made'], ['Never', 'Made']]);
   });
 
   it('should_not_mutate_the_input_array', () => {
